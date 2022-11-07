@@ -1,3 +1,6 @@
+# Esclude WebStorm project dir
+.idea
+
 # Logs
 logs
 *.log
