@@ -98,7 +98,7 @@ function getFileByExtension (filesArrayLocal, fileExtension = '.txt') {
  */
 function printFilesByIndexes (fileInfoLocal, filesArrayLocal, indexesArr) {
   for (let i = 0; i < indexesArr.length; i++) {
-    printFileStdout(fileInfoLocal, filesArrayLocal[indexesArr[i]]);
+    printFileReadStreamRedirectToStdout(fileInfoLocal, filesArrayLocal[indexesArr[i]]);
   }
 }
 
@@ -132,6 +132,32 @@ function printFileStdout (fileInfoLocal, fileName) {
       stdout.write(`${data}\n`);
     }
   );
+}
+
+
+/**
+ * Print file by console.log(), read by ReadStream.
+ * @param fileInfoLocal - file info object;
+ * @param fileName      - file name.
+ */
+function printFileConsoleLogReadStream (fileInfoLocal, fileName) {
+  /* Read and print file */
+  const filePath = path.join(fileInfoLocal.dir, fileName);
+  const readableStream = fs.createReadStream(filePath, 'utf-8');
+  readableStream.on('data', chunk => console.log(chunk));
+}
+
+
+/**
+ * Print file by redirect ReadStream to stdout.
+ * @param fileInfoLocal - file info object;
+ * @param fileName      - file name.
+ */
+function printFileReadStreamRedirectToStdout (fileInfoLocal, fileName) {
+  /* Read and print file */
+  const filePath = path.join(fileInfoLocal.dir, fileName);
+  const readableStream = fs.createReadStream(filePath, 'utf-8');
+  readableStream.on('data', data => stdout.write(`${data}\n`));
 }
 
 
