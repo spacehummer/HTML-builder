@@ -62,7 +62,7 @@ function main () {
         printFiles(result);
       }
       filesArray = result;
-      const filesIndexes = getFileByExtension(filesArray, '.txt');
+      const filesIndexes = getFileByExtension(filesArray, '.js');
       printFilesByIndexes(fileInfo, filesArray, filesIndexes);
     },
     error => errorUnexpected(error)
@@ -118,7 +118,7 @@ function printFiles (filesArrArg) {
 
 
 /**
- * Print file by stdout
+ * Print file by stdout.
  * @param fileInfoLocal - file info object;
  * @param fileName      - file name.
  */
@@ -129,10 +129,13 @@ function printFileStdout (fileInfoLocal, fileName) {
     'utf-8',
     (err, data) => {
       if (err) throw err;
-      console.log(data);
+      stdout.write(`${data}\n`);
     }
   );
 }
+
+
+
 
 
 /**
