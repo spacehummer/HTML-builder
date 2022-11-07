@@ -62,7 +62,7 @@ function main () {
         printFiles(result);
       }
       filesArray = result;
-      const filesIndexes = getFileByExtension(filesArray, '.js');
+      const filesIndexes = getFileByExtension(filesArray, '.txt');
       printFilesByIndexes(fileInfo, filesArray, filesIndexes);
     },
     error => errorUnexpected(error)
@@ -133,9 +133,6 @@ function printFileStdout (fileInfoLocal, fileName) {
     }
   );
 }
-
-
-
 
 
 /**
