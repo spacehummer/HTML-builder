@@ -41,7 +41,7 @@ const farewell = '**** You interrupt the work of application.\n     See you late
  *    [ ] - readlinePromises.createInterface(options) ?
  *      [x] - from stdin to stdout, without handle Ctrl + C or/and 'exit'.
  *      [x] - from stdin to stdout, handling `exit` for close and print farewell phrase.
- *      [ ] - from stdin to stdout, handling Ctrl + C for close and print farewell phrase.
+ *      [x] - from stdin to stdout, handling Ctrl + C for close and print farewell phrase.
  *
  *    ...
  *
@@ -81,6 +81,7 @@ function readLinesFromStdinToStdout () {
    * */
   rl.on('line', (line) => {
     console.log(`Received: ${line}`);
+    /* If current line is `exit` with spaces - close interface. */
     if (line.trim() === 'exit') {
       rl.close();
     }
@@ -95,6 +96,12 @@ function readLinesFromStdinToStdout () {
     console.log(farewell);
   });
 
+  /**
+   * Listen event `SIGINT` in console for close read line piping interface.
+   */
+  process.once('SIGINT', () => {
+    rl.close();
+  });
 }
 
 
