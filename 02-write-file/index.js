@@ -14,6 +14,13 @@ const fs = require('fs');
 const readline = require('readline');
 const {read} = require("fs");
 
+/* Using destructurization, get process objects,
+ * through which we will control:
+ *  - input stream;
+ *  - the output stream.
+ * */
+const { stdin, stdout } = process;
+
 /* Program mode (like preprocessor directives in C++) */
 const debugHardcode = 0;
 /**
@@ -22,10 +29,7 @@ const debugHardcode = 0;
 const debugFlag = 0;
 const debug = debugHardcode ? debugHardcode : debugFlag;
 
-/* Using destructurization, get process objects,
- * through which we will control the output stream.
- * */
-const { stdout } = process;
+
 
 /*
  * Testing write to file
@@ -45,12 +49,15 @@ function main () {
 }
 
 
+/**
+ * Test possibilities of
+ */
 function readLinesStdinReadLineTest () {
 
   /* Creating readLine interface between input and output streams. */
   const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
+    input: stdin,
+    output: stdout,
     terminal: false,
     /* Prompt to every line or only for first?.. */
     prompt: '>'
