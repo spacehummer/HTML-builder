@@ -32,11 +32,13 @@ const debug = debugHardcode ? debugHardcode : debugFlag;
 
 
 /*
- * Testing write to file
- * Variants:
- *   fs.createWriteStream ?
- *   readlinePromises.createInterface(options) ?
- *   ...
+ * TODO: Testing piping and write to file.
+ *  Variants:
+ *    [ ] - fs.createWriteStream ?
+ *    [ ] - readlinePromises.createInterface(options) ?
+ *      [x] - from stdin to stdout, without handle Ctrl + C or/and 'exit'.
+ *      [ ] - from stdin to stdout, handling Ctrl + C and `exit`.
+ *    ...
  *
  * */
 
@@ -45,14 +47,16 @@ const debug = debugHardcode ? debugHardcode : debugFlag;
  * Entry point.
  */
 function main () {
-  readLinesStdinReadLineTest();
+  readLinesFromStdinToStdout();
 }
 
 
 /**
- * Test possibilities of
+ * Test possibilities of piping, using .createInterface().
+ * @description: Test possibilities of piping, using .createInterface().
+ *               Pipe from stdin to stdout.
  */
-function readLinesStdinReadLineTest () {
+function readLinesFromStdinToStdout () {
 
   /* Creating readLine interface between input and output streams. */
   const rl = readline.createInterface({
