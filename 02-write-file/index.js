@@ -29,7 +29,10 @@ const debugHardcode = 0;
 const debugFlag = 0;
 const debug = debugHardcode ? debugHardcode : debugFlag;
 
-
+/**
+ * Farewell phrase
+ */
+const farewell = '**** You interrupt the work of application.\n     See you later!';
 
 /*
  * TODO: Testing piping and write to file.
@@ -37,7 +40,9 @@ const debug = debugHardcode ? debugHardcode : debugFlag;
  *    [ ] - fs.createWriteStream ?
  *    [ ] - readlinePromises.createInterface(options) ?
  *      [x] - from stdin to stdout, without handle Ctrl + C or/and 'exit'.
- *      [ ] - from stdin to stdout, handling Ctrl + C and `exit`.
+ *      [x] - from stdin to stdout, handling `exit` for close and print farewell phrase.
+ *      [ ] - from stdin to stdout, handling Ctrl + C for close and print farewell phrase.
+ *
  *    ...
  *
  * */
@@ -76,6 +81,9 @@ function readLinesFromStdinToStdout () {
    * */
   rl.on('line', (line) => {
     console.log(`Received: ${line}`);
+    if (line.trim() === 'exit') {
+      rl.close();
+    }
   });
 
   /* Listen event `close` for do something then interface closed. */
@@ -84,7 +92,7 @@ function readLinesFromStdinToStdout () {
    * The next time eventName is triggered, this listener is removed and then invoked.
    * */
   rl.once('close', () => {
-    console.log('End of work!');
+    console.log(farewell);
   });
 
 }
