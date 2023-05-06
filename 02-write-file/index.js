@@ -32,7 +32,7 @@ const debug = debugHardcode ? debugHardcode : debugFlag;
 /**
  * Farewell phrase
  */
-const farewell = '**** You interrupt the work of application.\n     See you later!';
+const farewell = '****\tYou interrupt the work of application.\n\tSee you later!';
 
 /*
  * TODO: Testing piping and write to file.
@@ -63,13 +63,18 @@ function main () {
  */
 function readLinesFromStdinToStdout () {
 
+  /* Welcome dialog */
+  stdout.write('****\tWelcome to my demo for create interface!\n' +
+    '\tWrite something after `> ` prompt msg, and it is piping into stdout.\n' +
+    '\tIf your want exit, type `exit` or press `Ctrl + C`\n\n');
+
   /* Creating readLine interface between input and output streams. */
   const rl = readline.createInterface({
     input: stdin,
     output: stdout,
     terminal: false,
     /* Prompt to every line or only for first?.. */
-    prompt: '>'
+    prompt: '> '
   });
 
   rl.prompt();
@@ -85,6 +90,7 @@ function readLinesFromStdinToStdout () {
     if (line.trim() === 'exit') {
       rl.close();
     }
+    rl.prompt();
   });
 
   /* Listen event `close` for do something then interface closed. */
@@ -94,6 +100,7 @@ function readLinesFromStdinToStdout () {
    * */
   rl.once('close', () => {
     console.log(farewell);
+    process.exit();
   });
 
   /**
