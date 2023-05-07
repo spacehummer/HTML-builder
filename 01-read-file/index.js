@@ -12,9 +12,6 @@ const path = require('path');
 const fs = require('fs');
 // </editor-fold desc="Load modules">
 
-/* Benchmarking: start */
-console.time();
-
 // <editor-fold desc="Program mode (like preprocessor directives in C++)">
 const debugHardcode = 0;
 /**
@@ -23,6 +20,11 @@ const debugHardcode = 0;
 const debugFlag = 0;
 const debug = debugHardcode ? debugHardcode : debugFlag;
 // </editor-fold desc="Program mode (like preprocessor directives in C++)">
+
+/* Benchmarking: start */
+if (debug) {
+  console.time();
+}
 
 /* Program config: */
 const extensionOfReadingFiles = '.txt';
@@ -207,4 +209,6 @@ main();
 
 /* Benchmarking: end */
 /* Не учтена асинхронность! */
-console.timeEnd();
+if (debug) {
+  console.timeEnd();
+}
