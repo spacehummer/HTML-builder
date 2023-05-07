@@ -1,22 +1,38 @@
+/* Reason for suppress: using ESLint rule for it. */
+// noinspection JSUnusedLocalSymbols
+
+// <editor-fold desc="Load modules">
+
+
 /* Load modules:
  *  - path - for work with paths ;
  *  - fs - for work with file system.
  * */
 const path = require('path');
 const fs = require('fs');
+// </editor-fold desc="Load modules">
 
-/* Program mode (like preprocessor directives in C++) */
+/* Benchmarking: start */
+console.time();
+
+// <editor-fold desc="Program mode (like preprocessor directives in C++)">
 const debugHardcode = 0;
 /**
  * TODO: get debug flag from bash.
  */
 const debugFlag = 0;
 const debug = debugHardcode ? debugHardcode : debugFlag;
+// </editor-fold desc="Program mode (like preprocessor directives in C++)">
 
+/* Program config: */
+const extensionOfReadingFiles = '.txt';
+
+// <editor-fold desc="Get stdout">
 /* Using destructurization, get process objects,
  * through which we will control the output stream.
  * */
 const { stdout } = process;
+// </editor-fold desc="Get stdout">
 
 /**
  * Entry point.
@@ -37,12 +53,12 @@ function main () {
     stdout.write(`Get files from dir ${path.join(fileInfo.dir, fileInfo.base)}:\n`);
   }
 
-  /* reason for suppress: variable used in `.then` */
+  /* Reason for suppress: variable used in `.then` */
   // eslint-disable-next-line no-unused-vars
   let filesArray = Array();
 
   /* Create Promise for get all file names in dir by asynchronous method */
-  let fileRead = new Promise(function(resolve, reject) {
+  let filesRead = new Promise(function(resolve, reject) {
     let filesArrLocal = Array();
     fs.readdir(fileInfo.dir, (err, files) => {
       files.forEach(file => {
@@ -56,13 +72,13 @@ function main () {
   });
 
   /* Execute code for print file names from dir after fs.readdir complete work. */
-  fileRead.then(
-    result => {
+  filesRead.then(
+    (result) => {
       if (debug) {
         printFiles(result);
       }
       filesArray = result;
-      const filesIndexes = getFileByExtension(filesArray, '.txt');
+      const filesIndexes = getFileByExtension(filesArray, extensionOfReadingFiles);
       printFilesByIndexes(fileInfo, filesArray, filesIndexes);
     },
     error => errorUnexpected(error)
@@ -98,7 +114,7 @@ function getFileByExtension (filesArrayLocal, fileExtension = '.txt') {
  */
 function printFilesByIndexes (fileInfoLocal, filesArrayLocal, indexesArr) {
   for (let i = 0; i < indexesArr.length; i++) {
-    printFileReadStreamRedirectToStdout(fileInfoLocal, filesArrayLocal[indexesArr[i]]);
+    printFileReadStreamPipeToStdout(fileInfoLocal, filesArrayLocal[indexesArr[i]]);
   }
 }
 
@@ -118,10 +134,12 @@ function printFiles (filesArrArg) {
 
 
 /**
- * Print file by stdout.
+ * Print one file by stdout.
  * @param fileInfoLocal - file info object;
  * @param fileName      - file name.
  */
+/* Reason for suppress: study function */
+// eslint-disable-next-line no-unused-vars
 function printFileStdout (fileInfoLocal, fileName) {
   /* Read and print file */
   fs.readFile(
@@ -140,6 +158,8 @@ function printFileStdout (fileInfoLocal, fileName) {
  * @param fileInfoLocal - file info object;
  * @param fileName      - file name.
  */
+/* Reason for suppress: study function */
+// eslint-disable-next-line no-unused-vars
 function printFileConsoleLogReadStream (fileInfoLocal, fileName) {
   /* Read and print file */
   const filePath = path.join(fileInfoLocal.dir, fileName);
@@ -153,11 +173,21 @@ function printFileConsoleLogReadStream (fileInfoLocal, fileName) {
  * @param fileInfoLocal - file info object;
  * @param fileName      - file name.
  */
-function printFileReadStreamRedirectToStdout (fileInfoLocal, fileName) {
+/* Reason for suppress: study function */
+// eslint-disable-next-line no-unused-vars
+function printFileReadStreamWriteChunkToStdout (fileInfoLocal, fileName) {
   /* Read and print file */
   const filePath = path.join(fileInfoLocal.dir, fileName);
   const readableStream = fs.createReadStream(filePath, 'utf-8');
   readableStream.on('data', data => stdout.write(`${data}\n`));
+}
+
+
+function printFileReadStreamPipeToStdout (fileInfoLocal, fileName) {
+  /* Read and print file */
+  const filePath = path.join(fileInfoLocal.dir, fileName);
+  const readableStream = fs.createReadStream(filePath, 'utf-8');
+  readableStream.pipe(stdout);
 }
 
 
@@ -174,3 +204,7 @@ function errorUnexpected (errLocal) {
  * Entry point function execute.
  */
 main();
+
+/* Benchmarking: end */
+/* Не учтена асинхронность! */
+console.timeEnd();
