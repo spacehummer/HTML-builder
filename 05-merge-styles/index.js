@@ -5,8 +5,9 @@
  * */
 
 /* Load modules:
- *  - path - for work with paths ;
- *  - fs - for work with file system;
+ *  - path - for work with paths.
+ *  - readline - for read from stream by line.
+ *  - fs - for work with file system.
  *  - node:fs/promises - node:fs module enables interacting with the file system
  *                       in a way modeled on standard POSIX functions.
  *  - node:fs/promises.mkdir - asynchronously creates a directory.
@@ -14,13 +15,15 @@
  *                                By default, dest is overwritten if it already exists.
  *  - node:fs/promises.constants - returns an object containing commonly used constants
  *                                 for file system operations.
- *  *  - node:fs/promises.access -
- *  - readline - for read from stream by line.
+ *  - node:fs/promises.access - check accessibility of file or actions with file
+ *                              by system constants.
+ *  - stream/promises.pipeline - for await streams piping is finished.
  * */
 const path = require('path');
 const fsPromises = require('node:fs/promises');
-const {copyFile, access, constants} = require('node:fs/promises');
+const { copyFile, access, constants } = require('node:fs/promises');
 const fs = require('fs');
+const { pipeline } = require('stream/promises');
 
 /* Using destructurization, get process objects,
  * through which we will control:
@@ -44,8 +47,18 @@ const phrases = {
   bundleAlreadyExist: '----\tBundle is already exist. Deleting...\n',
   bundleSuccessfullyDeleted: '----\tBundle was successfully deleted!\n',
   bundlePathClear: '----\tStyles bundle destination path is clear.\n',
+  cssSrcAppend: cssSrcAppendMsg,
+  cssSrcReject: cssSrcRejectMsg,
   farewell: '****\tProgram has finished its work.\n\tSee you later!\n',
 };
+
+function cssSrcAppendMsg(fileName) {
+  return `----\tSource CSS file with name ${fileName} has been successfully added.\n`;
+}
+
+function cssSrcRejectMsg(fileName) {
+  return `----\tSource CSS file with name ${fileName} has been rejected!\n`;
+}
 
 /**
  * Entry point.
@@ -64,16 +77,6 @@ async function bundleStyles(dirsNames = dirsNamesDefault) {
   const stylesDirDestPath = path.join(__dirname, dirsNames.bundleDest);
   const stylesBundleDestPath = path.join(__dirname, dirsNames.bundleDest, 'bundle.css');
 
-  try {
-    await access(stylesDirDestPath, constants.F_OK).then(() => {
-      stdout.write(phrases.distExist);
-    });
-    await checkBundle();
-    await makeBundle();
-  } catch (err) {
-    stdout.write(err.toString());
-  }
-
   async function checkBundle () {
     try {
       await access(stylesBundleDestPath, constants.F_OK).then(() => {
@@ -87,13 +90,83 @@ async function bundleStyles(dirsNames = dirsNamesDefault) {
     }
   }
 
+  /**
+   *
+   * @return {Promise<void>}
+   */
   async function makeBundle () {
     try {
+      /**
+       * WriteStream for bundle.css file.
+       * @type {WriteStream}
+       */
       const bundleWriteStream = fs.createWriteStream(stylesBundleDestPath, 'utf-8');
-      bundleWriteStream.write('test');
+
+      /**
+       * Array of source css files for analysing and bundle.
+       * @type {string[]}
+       */
+      const cssFiles = await fsPromises.readdir(stylesDirSrcPath, 'utf-8');
+
+      /* Analyse source CSS files and bundle valid files in Promise
+       * for full control of async work!
+       * */
+      /* Return processing promise! */
+      return new Promise((resolve) => {
+        cssFiles.forEach((file) => {
+          /**
+           * Path to currently analysing source CSS file.
+           * @type {string}
+           */
+          const pathToCurrentSrcFile = path.join(stylesDirSrcPath, file);
+          /* Analysing... */
+          fs.stat(pathToCurrentSrcFile, (err, fileStats) => {
+            if (err) {
+              throw err;
+            }
+            if ((fileStats.isFile()) && (path.parse(pathToCurrentSrcFile).ext === '.css')) {
+              /**
+               * Read Stream for current valid source CSS file.
+               * @type {ReadStream}
+               */
+              const currentSrcFileReadStream = fs.createReadStream(
+                pathToCurrentSrcFile,
+                'utf-8'
+              );
+              /* Pipe Read Stream of current valid source CSS file into CSS bundle Write Stream. */
+              // currentSrcFileReadStream.pipe(bundleWriteStream);
+              /* Pipe Read Stream of current valid source CSS file into CSS bundle Write Stream.
+               * Use pipeline for add `\n` after code from every CSS source file. */
+              pipeline(
+                currentSrcFileReadStream,
+                bundleWriteStream,
+              ).then(() => {
+                bundleWriteStream.write('\n');
+              });
+
+              stdout.write(phrases.cssSrcAppend(file));
+            }
+          });
+        });
+        /* Resolve current Promise in Event Handler for finish writing in bundleWriteStream. */
+        bundleWriteStream.on('finish', () => {
+          resolve();
+          // stdout.write('\n' + phrases.farewell);
+        });
+      });
     } catch (err) {
       stdout.write(err.toString());
     }
+  }
+
+  try {
+    await access(stylesDirDestPath, constants.F_OK).then(() => {
+      stdout.write(phrases.distExist);
+    });
+    await checkBundle();
+    await makeBundle();
+  } catch (err) {
+    stdout.write(err.toString());
   }
 }
 
