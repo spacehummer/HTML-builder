@@ -66,6 +66,9 @@ function getFilesInfo() {
       stdout.write('\t|  ' + (Math.ceil((100 * stats.size) / 1024) / 100).toString(10)
         + ' kB'
         + '\t|\n');
+      if (isLast) {
+        stdout.write('\n' + phrases.farewell);
+      }
     }
   }
 
