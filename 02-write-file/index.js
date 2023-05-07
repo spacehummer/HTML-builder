@@ -12,7 +12,8 @@
 const path = require('path');
 const fs = require('fs');
 const readline = require('readline');
-const {read} = require("fs");
+const { EOL } = require('os');
+// const {read} = require('fs');
 
 /* Using destructurization, get process objects,
  * through which we will control:
@@ -21,18 +22,33 @@ const {read} = require("fs");
  * */
 const { stdin, stdout } = process;
 
-/* Program mode (like preprocessor directives in C++) */
-const debugHardcode = 0;
-/**
- * TODO: get debug flag from bash.
- */
-const debugFlag = 0;
-const debug = debugHardcode ? debugHardcode : debugFlag;
+/* Program debug mode control (like preprocessor directives in C++) */
+// const debugHardcode = 0;
+// /**
+//  * TODO: get debug flag from bash.
+//  */
+// const debugFlag = 0;
+// const debug = debugHardcode ? debugHardcode : debugFlag;
+
+/* Set program mode:
+ *  0 - normal, main functional
+ *  1 - demo-1, test possibilities of piping, using .createInterface().
+ * */
+let programMode = 0;
 
 /**
- * Farewell phrase
+ * Phrases for dialog with user.
  */
-const farewell = '****\tYou interrupt the work of application.\n\tSee you later!';
+const phrases = {
+  hello: '****\tWelcome to program for write to file from stdin!\n' +
+             '\tWrite something after `> ` prompt msg, press `Enter` and ' +
+             'it will be written to a file.\n' +
+             '\tIf your want exit, type `exit` and press `Enter` or press `Ctrl + C`\n\n',
+  mode1hello: '****\tWelcome to my demo for create interface!\n' +
+                  '\tWrite something after `> ` prompt msg, and it is piping into stdout.\n' +
+                  '\tIf your want exit, type `exit` or press `Ctrl + C`\n\n',
+  farewell: '****\tYou interrupt the work of application.\n\tSee you later!',
+};
 
 /*
  * TODO: Testing piping and write to file.
@@ -51,22 +67,42 @@ const farewell = '****\tYou interrupt the work of application.\n\tSee you later!
 /**
  * Entry point.
  */
-function main () {
-  readLinesFromStdinToStdout();
+function main() {
+  modeControl();
+  switch (programMode) {
+  case 0: {
+    pipeFromStdinToFile();
+    break;
+  }
+  case 1: {
+    pipeFromStdinToStdout();
+    break;
+  }
+  default: {
+    break;
+  }
+  }
 }
 
+/**
+ * Control mode of application.
+ */
+function modeControl() {
+  const flagIndex = process.argv.indexOf('--demo-1');
+  if (flagIndex !== -1) {
+    programMode = 1;
+  }
+}
 
 /**
  * Test possibilities of piping, using .createInterface().
  * @description: Test possibilities of piping, using .createInterface().
  *               Pipe from stdin to stdout.
  */
-function readLinesFromStdinToStdout () {
+function pipeFromStdinToStdout () {
 
   /* Welcome dialog */
-  stdout.write('****\tWelcome to my demo for create interface!\n' +
-    '\tWrite something after `> ` prompt msg, and it is piping into stdout.\n' +
-    '\tIf your want exit, type `exit` or press `Ctrl + C`\n\n');
+  stdout.write(phrases.mode1hello);
 
   /* Creating readLine interface between input and output streams. */
   const rl = readline.createInterface({
@@ -99,7 +135,7 @@ function readLinesFromStdinToStdout () {
    * The next time eventName is triggered, this listener is removed and then invoked.
    * */
   rl.once('close', () => {
-    console.log(farewell);
+    console.log('\n' + phrases.farewell);
     process.exit();
   });
 
@@ -111,6 +147,56 @@ function readLinesFromStdinToStdout () {
   });
 }
 
+function pipeFromStdinToFile() {
+
+  /* Welcome dialog */
+  stdout.write(phrases.hello);
+
+  /**
+   * Write stream for write to file.
+   * @type {WriteStream}
+   */
+  const streamToFile = fs.createWriteStream(path.join(__dirname,'text.txt'));
+
+  /* Creating readLine interface between stdin and streamToFile streams. */
+  const rl = readline.createInterface({
+    input: stdin,
+    output: stdout,
+    terminal: false,
+    /* Prompt to every line or only for first?.. */
+    prompt: '> '
+  });
+
+  rl.prompt();
+
+  function rlOnHandler(line) {
+    console.log(`Received: ${line}`);
+    /* If current line is `exit` with spaces - close interface. */
+    if (line.trim() === 'exit') {
+      rl.close();
+    } else {
+      streamToFile.write(`${line}${EOL}`);
+    }
+    rl.prompt();
+  }
+
+  /* Listen event `line` for display every received line. */
+  rl.on('line', rlOnHandler.bind(this));
+
+  /* Listen event `close` for do something then interface closed. */
+  rl.once('close', () => {
+    console.log('\n' + phrases.farewell);
+    process.exit();
+  });
+
+  /**
+   * Listen event `SIGINT` in console for close read line piping interface.
+   */
+  process.once('SIGINT', () => {
+    rl.close();
+  });
+
+}
 
 /**
  * Entry point function execute.
