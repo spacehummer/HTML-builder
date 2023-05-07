@@ -8,6 +8,7 @@
  *  - path - for work with paths ;
  *  - fs - for work with file system;
  *  - readline - for read from stream by line.
+ *  - EOL from OS - for system EOL symbol.
  * */
 const path = require('path');
 const fs = require('fs');
