@@ -44,6 +44,8 @@ const phrases = {
   dirSuccessfullyDeleted: '----\tDir was successfully deleted!\n',
   dirSuccessfullyCreated: '----\tDir was successfully created!\n',
   dirCreate: '----\tCreating dir...\n',
+  filesCopy: '----\tCopy files...\n',
+  filesCopyReady: '----\tFiles was successfully copied!\n',
   destinationPathClear: '----\tThe destination path is not occupied.\n',
   farewell: '****\tProgram has finished its work.\n\tSee you later!\n',
 };
@@ -53,7 +55,9 @@ const phrases = {
  */
 function main() {
   stdout.write(phrases.hello);
-  copyDirWithFiles().then(() => {});
+  copyDirWithFiles().then(() => {
+    stdout.write('\n' + phrases.farewell);
+  });
 }
 
 /**
@@ -83,8 +87,27 @@ async function copyDirWithFiles(srcDirLocal = sourceDirName) {
     await mkdir(destinationDirPath).then(() => {
       stdout.write(phrases.dirSuccessfullyCreated);
     });
-  } catch {
 
+    stdout.write(phrases.filesCopy);
+
+    /**
+     * Array of source files.
+     * @type {string[]}
+     */
+    const sourceFiles = await fs.readdir(sourceDirPath, 'utf-8');
+
+    sourceFiles.forEach((file) => {
+      const filePath = {
+        src: path.join(sourceDirPath, file),
+        dest: path.join(destinationDirPath, file),
+      };
+      copyFile(filePath.src, filePath.dest);
+    });
+
+    stdout.write(phrases.filesCopyReady);
+
+  } catch (err) {
+    stdout.write(err.toString());
   }
 
 }
