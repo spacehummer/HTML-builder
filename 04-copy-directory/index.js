@@ -39,6 +39,12 @@ const sourceDirName = 'files';
  */
 const phrases = {
   hello: '****\tWelcome to program, that copy dir with files!\n\n',
+  startCopying: '----\tFolder copying started...\n',
+  dirAlreadyExist: '----\tDestination dir is already exist. Deleting...\n',
+  dirSuccessfullyDeleted: '----\tDir was successfully deleted!\n',
+  dirSuccessfullyCreated: '----\tDir was successfully created!\n',
+  dirCreate: '----\tCreating dir...\n',
+  destinationPathClear: '----\tThe destination path is not occupied.\n',
   farewell: '****\tProgram has finished its work.\n\tSee you later!\n',
 };
 
@@ -46,6 +52,7 @@ const phrases = {
  * Entry point.
  */
 function main() {
+  stdout.write(phrases.hello);
   copyDirWithFiles().then(() => {});
 }
 
@@ -60,11 +67,24 @@ async function copyDirWithFiles(srcDirLocal = sourceDirName) {
   const destinationDirPath = path.join(__dirname, `${srcDirLocal}-copy`);
 
   try {
-    await access(destinationDirPath, constants.R_OK | constants.W_OK);
-    stdout.write('Can access.');
-    // await fs.rm(destinationDirPath, { recursive: true, force: true });
+    await access(destinationDirPath, constants.F_OK).then(() => {
+      stdout.write(phrases.dirAlreadyExist);
+    });
+    await fs.rm(destinationDirPath, { recursive: true, force: true }).then(() => {
+      stdout.write(phrases.dirSuccessfullyDeleted);
+    });
+
   } catch (err) {
-    stdout.write(err.toString());
+    stdout.write(phrases.destinationPathClear);
+  }
+
+  try {
+    stdout.write(phrases.dirCreate);
+    await mkdir(destinationDirPath).then(() => {
+      stdout.write(phrases.dirSuccessfullyCreated);
+    });
+  } catch {
+
   }
 
 }
