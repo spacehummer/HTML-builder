@@ -18,29 +18,25 @@
  *  - node:fs/promises.access - check accessibility of file or actions with file
  *                              by system constants.
  *  - stream/promises.pipeline - for await streams piping is finished.
+ *  - stream.Transform - class for create custom class for make custom transform stream.
+ *  - events.EventEmitter - for control maximum possible count of listeners (warn: (node:10412)).
  * */
 const path = require('path');
 const fsPromises = require('node:fs/promises');
-const { copyFile, access, constants } = require('node:fs/promises');
+const { access, constants } = require('node:fs/promises');
 const fs = require('fs');
 const { pipeline } = require('stream/promises');
 
-const stream = require('stream');
-const Transform = stream.Transform;
+const { Transform } = require('stream');
+const { EventEmitter } = require('events');
 
-// function Upper(options) {
-//   // allow use without new
-//   if (!(this instanceof Upper)) {
-//     return new Upper(options);
-//   }
-//
-//   // init Transform
-//   transform.call(this, options);
-// }
-// util.inherits(Upper, transform);
+/* Increase maximum listeners for EventEmitter in case of using `pipeline` in `.forEach()` and
+ * get false-positive warn about memory leak.
+ * */
+EventEmitter.defaultMaxListeners = 16;
 
+// <editor-fold desc="My custom transform stream">
 class TransformStream extends Transform {
-
   constructor() {
     super();
     this.super_ = Transform;
@@ -51,25 +47,17 @@ class TransformStream extends Transform {
 }
 
 TransformStream.prototype._transform = function (chunk, enc, cb) {
-  // var upperChunk = chunk.toString().toUpperCase();
-  // this.push(upperChunk);
+  let data = String(chunk) + '\n';
+  data = this.lastLineData + data;
 
-  // let data = String(chunk);
-  // data = this.lastLineData + data;
-
-  cb(null, chunk);
+  cb(null, data);
 };
 
 TransformStream.prototype._flush = function (cb) {
-  this.push('TTTT');
+  // this.push('TTTT');
   cb();
 };
-
-const transformStream = new TransformStream();
-transformStream.pipe(process.stdout); // output to stdout
-transformStream.write('hello world\n'); // input line 1
-transformStream.write('another line');  // input line 2
-transformStream.end();
+// </editor-fold desc="My custom transform stream">
 
 /* Using destructurization, get process objects,
  * through which we will control:
@@ -179,20 +167,26 @@ async function bundleStyles(dirsNames = dirsNamesDefault) {
                 pathToCurrentSrcFile,
                 'utf-8'
               );
-              /* Pipe Read Stream of current valid source CSS file into CSS bundle Write Stream. */
+              /* Pipe Read Stream of current valid source CSS file into CSS bundle Write Stream.
+               * I refused it. */
               // currentSrcFileReadStream.pipe(bundleWriteStream);
               /* Pipe Read Stream of current valid source CSS file into CSS bundle Write Stream.
-               * Use pipeline for add `\n` after code from every CSS source file. */
+               * Use pipeline and currentSrcFileReadStream for add `\n`
+               * after code from every CSS source file.
+               * */
+              const transformStream = new TransformStream();
               pipeline(
                 currentSrcFileReadStream,
+                transformStream,
                 bundleWriteStream,
               ).then(() => {
                 // bundleWriteStream.write('****');
                 // console.log('TEST');
               });
 
-
               stdout.write(phrases.cssSrcAppend(file));
+            } else {
+              stdout.write(phrases.cssSrcReject(file));
             }
           });
         });
