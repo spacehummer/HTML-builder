@@ -25,6 +25,52 @@ const { copyFile, access, constants } = require('node:fs/promises');
 const fs = require('fs');
 const { pipeline } = require('stream/promises');
 
+const stream = require('stream');
+const Transform = stream.Transform;
+
+// function Upper(options) {
+//   // allow use without new
+//   if (!(this instanceof Upper)) {
+//     return new Upper(options);
+//   }
+//
+//   // init Transform
+//   transform.call(this, options);
+// }
+// util.inherits(Upper, transform);
+
+class TransformStream extends Transform {
+
+  constructor() {
+    super();
+    this.super_ = Transform;
+
+    this.lastLineData = '';
+    this.objectMode = true;
+  }
+}
+
+TransformStream.prototype._transform = function (chunk, enc, cb) {
+  // var upperChunk = chunk.toString().toUpperCase();
+  // this.push(upperChunk);
+
+  // let data = String(chunk);
+  // data = this.lastLineData + data;
+
+  cb(null, chunk);
+};
+
+TransformStream.prototype._flush = function (cb) {
+  this.push('TTTT');
+  cb();
+};
+
+const transformStream = new TransformStream();
+transformStream.pipe(process.stdout); // output to stdout
+transformStream.write('hello world\n'); // input line 1
+transformStream.write('another line');  // input line 2
+transformStream.end();
+
 /* Using destructurization, get process objects,
  * through which we will control:
  *  stdin - input stream;
@@ -141,8 +187,10 @@ async function bundleStyles(dirsNames = dirsNamesDefault) {
                 currentSrcFileReadStream,
                 bundleWriteStream,
               ).then(() => {
-                bundleWriteStream.write('\n');
+                // bundleWriteStream.write('****');
+                // console.log('TEST');
               });
+
 
               stdout.write(phrases.cssSrcAppend(file));
             }
