@@ -116,7 +116,7 @@ function cssSrcRejectMsg(fileName) {
 }
 
 function htmlComponentReadSuccess(currentFileName) {
-  return`----\tComponent \`${currentFileName}\` have been successfully read!\n`
+  return`----\tComponent \`${currentFileName}\` have been successfully read!\n`;
 }
 
 /* Create paths */
