@@ -26,7 +26,7 @@
  * */
 const path = require('path');
 const fsPromises = require('node:fs/promises');
-const { readdir, mkdir, access, constants, copyFile, rm} = require('node:fs/promises');
+const { readdir, mkdir, access, constants, copyFile} = require('node:fs/promises');
 const fs = require('fs');
 const { pipeline } = require('stream/promises');
 
@@ -176,28 +176,16 @@ async function bundleHTML() {
     htmlData.template = htmlData.template + data.toString();
   });
 
-  // componentsFilesNames.forEach((fileName) => {
-  //   /* Get path and name */
-  //   const currentFilePath = path.join(htmlComponentsDirSrcPath, fileName);
-  //   const currentFileName = path.parse(currentFilePath).name;
-  //
-  //   /* Get component content and append to content object */
-  //   async function getDataFromComponent() {
-  //     return new Promise(function (resolve, reject) {
-  //       const componentDataArr = [];
-  //       fs.createReadStream(currentFilePath, 'utf-8')
-  //         .on('data', (data) => {
-  //           componentDataArr.push(data.toString());
-  //         })
-  //         .on('end', () => {
-  //           resolve(componentDataArr);
-  //         })
-  //         .on('error', (err) => {
-  //           reject(err);
-  //         });
-  //     });
-  //   }
-
+  /**
+   * Get data from HTML component file, async.
+   * @desc return Promise with currentFileName, or error
+   * @param currentFilePath {String}  - path for curren processing file.
+   * @param currentFileName {String}  - name of the curren processing file.
+   * @return {Promise<unknown>}       - promise.
+   *                                    If fulfillment - return curren processing file name and
+   *                                    curren processing file full data.
+   *                                    If rejected - return Error.
+   */
   async function getDataFromComponent(currentFilePath, currentFileName) {
     return new Promise(function (resolve, reject) {
       const componentDataArr = [];
@@ -206,7 +194,8 @@ async function bundleHTML() {
           componentDataArr.push(data.toString());
         })
         .on('end', () => {
-          resolve(componentDataArr);
+          Object.assign(htmlData.components, {[currentFileName]: componentDataArr.join('')});
+          resolve(currentFileName, componentDataArr);
         })
         .on('error', (err) => {
           reject(err);
@@ -214,16 +203,21 @@ async function bundleHTML() {
     });
   }
 
+  /**
+   * Get data from all HTML component file, async in loop.
+   */
   await Promise.all(componentsFilesNames.map(async (fileName) => {
     /* Get path and name */
     const currentFilePath = path.join(htmlComponentsDirSrcPath, fileName);
     const currentFileName = path.parse(currentFilePath).name;
 
-    await getDataFromComponent(currentFilePath, currentFileName).then(() => {
+    await getDataFromComponent(currentFilePath, currentFileName).then((currentFileName) => {
       stdout.write(`----\tComponent \`${currentFileName}\` have been successfully read!\n`);
     });
 
-  }));
+  })).then(() => {
+    console.log(htmlData);
+  });
 
   // await getDataFromComponent()
   /* TODO: use for … of with await!!!
@@ -231,10 +225,6 @@ async function bundleHTML() {
    *            const contents = await fs.readFile(file, 'utf8')
    *            console.log(contents)
    * */
-
-  // });
-
-
 
 }
 
