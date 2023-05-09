@@ -91,6 +91,10 @@ const phrases = {
   cssSrcAppend: cssSrcAppendMsg,
   cssSrcReject: cssSrcRejectMsg,
 
+  htmlComponentReadSuccess: htmlComponentReadSuccess,
+  htmlTemplateProcessingSuccess: '----\tFully processing HTML template!\n',
+  htmlBundleWriteSuccess: '----\tHtml bundle file writing is completed.\n',
+
   startCopying: '----\tFolder copying started...\n',
   dirAlreadyExist: '----\tDestination dir is already exist. Deleting...\n',
   dirSuccessfullyDeleted: '----\tDir was successfully deleted!\n',
@@ -109,6 +113,10 @@ function cssSrcAppendMsg(fileName) {
 
 function cssSrcRejectMsg(fileName) {
   return `----\tSource CSS file with name ${fileName} has been rejected!\n`;
+}
+
+function htmlComponentReadSuccess(currentFileName) {
+  return`----\tComponent \`${currentFileName}\` have been successfully read!\n`
 }
 
 /* Create paths */
@@ -240,18 +248,18 @@ async function bundleHTML() {
     const currentFileName = path.parse(currentFilePath).name;
 
     await getDataFromComponent(currentFilePath, currentFileName).then((currentFileName) => {
-      stdout.write(`----\tComponent \`${currentFileName}\` have been successfully read!\n`);
+      stdout.write(phrases.htmlComponentReadSuccess(currentFileName));
     });
 
   })).then(() => {
-    stdout.write('----\tFully processing HTML template!\n');
+    stdout.write(phrases.htmlTemplateProcessingSuccess);
   });
 
   await renderHTML();
 
   await bundleHTMLWrite();
 
-  stdout.write('----\tHtml bundle file writing is completed.\n');
+  stdout.write(phrases.htmlBundleWriteSuccess);
 
   // await getDataFromComponent()
   /* TODO: use for … of with await!!!
@@ -321,8 +329,7 @@ async function bundleCSS () {
               transformStream,
               bundleWriteStream,
             ).then(() => {
-              // bundleWriteStream.write('****');
-              // console.log('TEST');
+
             });
 
             stdout.write(phrases.cssSrcAppend(file));
@@ -334,7 +341,6 @@ async function bundleCSS () {
       /* Resolve current Promise in Event Handler for finish writing in bundleWriteStream. */
       bundleWriteStream.on('finish', () => {
         resolve();
-        // stdout.write('\n' + phrases.farewell);
       });
     });
   } catch (err) {
