@@ -129,6 +129,7 @@ async function buildBundle () {
   try {
     await manageDestDir();
     // TODO: bundleHTML();
+    await bundleHTML();
     await bundleCSS();
     await copyAssets();
   } catch (err) {
@@ -175,32 +176,63 @@ async function bundleHTML() {
     htmlData.template = htmlData.template + data.toString();
   });
 
-  componentsFilesNames.forEach((fileName) => {
+  // componentsFilesNames.forEach((fileName) => {
+  //   /* Get path and name */
+  //   const currentFilePath = path.join(htmlComponentsDirSrcPath, fileName);
+  //   const currentFileName = path.parse(currentFilePath).name;
+  //
+  //   /* Get component content and append to content object */
+  //   async function getDataFromComponent() {
+  //     return new Promise(function (resolve, reject) {
+  //       const componentDataArr = [];
+  //       fs.createReadStream(currentFilePath, 'utf-8')
+  //         .on('data', (data) => {
+  //           componentDataArr.push(data.toString());
+  //         })
+  //         .on('end', () => {
+  //           resolve(componentDataArr);
+  //         })
+  //         .on('error', (err) => {
+  //           reject(err);
+  //         });
+  //     });
+  //   }
+
+  async function getDataFromComponent(currentFilePath, currentFileName) {
+    return new Promise(function (resolve, reject) {
+      const componentDataArr = [];
+      fs.createReadStream(currentFilePath, 'utf-8')
+        .on('data', (data) => {
+          componentDataArr.push(data.toString());
+        })
+        .on('end', () => {
+          resolve(componentDataArr);
+        })
+        .on('error', (err) => {
+          reject(err);
+        });
+    });
+  }
+
+  await Promise.all(componentsFilesNames.map(async (fileName) => {
     /* Get path and name */
     const currentFilePath = path.join(htmlComponentsDirSrcPath, fileName);
     const currentFileName = path.parse(currentFilePath).name;
 
-    /* Get component content and append to content object */
-    async function getDataFromComponent() {
-      return new Promise(function (resolve, reject) {
-        const componentDataArr = [];
-        fs.createReadStream(currentFilePath, 'utf-8')
-          .on('data', (data) => {
-            componentDataArr.push(data.toString());
-          })
-          .on('end', () => {
-            resolve(componentDataArr);
-          })
-          .on('error', (err) => {
-            reject(err);
-          });
-      });
-    }
+    await getDataFromComponent(currentFilePath, currentFileName).then(() => {
+      stdout.write(`----\tComponent \`${currentFileName}\` have been successfully read!\n`);
+    });
 
-    // await getDataFromComponent()
-    /* TODO: use for … of with await!!! */
+  }));
 
-  });
+  // await getDataFromComponent()
+  /* TODO: use for … of with await!!!
+   *  or use: await Promise.all(files.map(async (file) => {
+   *            const contents = await fs.readFile(file, 'utf8')
+   *            console.log(contents)
+   * */
+
+  // });
 
 
 
