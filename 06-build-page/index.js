@@ -96,11 +96,11 @@ const phrases = {
   dirSuccessfullyDeleted: '----\tDir was successfully deleted!\n',
   dirSuccessfullyCreated: '----\tDir was successfully created!\n',
   dirCreate: '----\tCreating dir...\n',
-  filesCopy: '----\tCopy files...\n',
+  filesCopy: '----\tCopy assets files...\n',
   filesCopyReady: '----\tFiles was successfully copied!\n',
   destinationPathClear: '----\tThe destination path is not occupied.\n',
 
-  farewell: '****\tProgram has finished its work.\n\tSee you later!\n',
+  farewell: '\n****\tProgram has finished its work.\n\tSee you later!\n',
 };
 
 function cssSrcAppendMsg(fileName) {
@@ -132,6 +132,7 @@ async function buildBundle () {
     await bundleHTML();
     await bundleCSS();
     await copyAssets();
+    stdout.write(phrases.farewell);
   } catch (err) {
     stdout.write(err.toString());
   }
@@ -159,19 +160,23 @@ async function manageDestDir() {
 
 async function bundleHTML() {
   const htmlTemplatePath = path.join(__dirname, 'template.html');
+  const htmlBundlePath = path.join(bundleDirDestPath, 'index.html');
   const htmlTemplateReadStream = fs.createReadStream(htmlTemplatePath,'utf-8');
+
   /**
-   * HTML source data and template.
-   * @type {{template: null}}
+   * HTML source data and template, HTML bundle.
+   * @type {{template: null, components: {}, bundle: null}}
    */
   const htmlData = {
     template: null,
     components: {},
+    bundle: null,
   };
   /* Get HTML components from components dir */
   const componentsFilesNames = await readdir(htmlComponentsDirSrcPath);
 
   /* Accumulate HTML Template data from Read Stream */
+  htmlData.template = '';
   htmlTemplateReadStream.on('data', (data) => {
     htmlData.template = htmlData.template + data.toString();
   });
@@ -203,6 +208,29 @@ async function bundleHTML() {
     });
   }
 
+  async function renderHTML () {
+    /* Get components names from previously made object. */
+    const componentsNames = Object.keys(htmlData.components);
+
+    htmlData.bundle = htmlData.template;
+
+    /* Replace all template strings in HTML template with HTML component content,
+     * using RegExp and `.replace()`.
+     * */
+    componentsNames.forEach((componentName) => {
+      const componentNameRegExp = new RegExp(`\\{\\{${componentName}\\}\\}`, 'gu');
+      htmlData.bundle = htmlData.bundle.replace(
+        componentNameRegExp,
+        htmlData.components[componentName],
+      );
+    });
+  }
+
+  async function bundleHTMLWrite () {
+    const htmlBundleWriteStream = fs.createWriteStream(htmlBundlePath,'utf-8');
+    htmlBundleWriteStream.write(htmlData.bundle);
+  }
+
   /**
    * Get data from all HTML component file, async in loop.
    */
@@ -216,8 +244,14 @@ async function bundleHTML() {
     });
 
   })).then(() => {
-    console.log(htmlData);
+    stdout.write('----\tFully processing HTML template!\n');
   });
+
+  await renderHTML();
+
+  await bundleHTMLWrite();
+
+  stdout.write('----\tHtml bundle file writing is completed.\n');
 
   // await getDataFromComponent()
   /* TODO: use for … of with await!!!
